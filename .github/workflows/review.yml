@@ -1,0 +1,22 @@
+name: AI Security Review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hent koden
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Vis diffen
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git diff "origin/$BASE_REF"...HEAD
+        
