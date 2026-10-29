@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  models: read
 
 jobs:
   review:
@@ -15,8 +16,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Vis diffen
+      - name: Lagre diffen
         env:
           BASE_REF: ${{ github.base_ref }}
-        run: git diff "origin/$BASE_REF"...HEAD
-        
+        run: git diff "origin/$BASE_REF"...HEAD -- . ':!.github' ':!scripts' > diff.txt
+
+      - name: AI-sikkerhetsgjennomgang
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/ai_review.py diff.txt
