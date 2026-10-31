@@ -1,13 +1,13 @@
-"""Sender en git-diff til GitHub Models og skriver ut sikkerhetsfunn."""
+"""Sender en git-diff til en spraakmodell og skriver ut sikkerhetsfunn."""
 import json
 import os
 import sys
 import urllib.error
 import urllib.request
 
-API_URL = "https://models.github.ai/inference/chat/completions"
-MODEL = "openai/gpt-4o-mini"
-MAX_DIFF_CHARS = 20000
+API_URL = os.environ.get("AI_API_URL", "https://api.groq.com/openai/v1/chat/completions")
+MODEL = os.environ.get("AI_MODEL", "openai/gpt-oss-120b")
+MAX_DIFF_CHARS = 12000
 
 SYSTEM_PROMPT = """Du er en sikkerhetsekspert som gjennomgaar kodeendringer.
 Finn sikkerhetssaarbarheter i diffen brukeren sender.
@@ -47,8 +47,6 @@ def ask_model(diff, token):
         headers={
             "Authorization": "Bearer " + token,
             "Content-Type": "application/json",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "ai-security-review",
         },
         method="POST",
@@ -72,7 +70,7 @@ def parse_findings(text):
     """Modellens svar er upaalitelig input: valider alt."""
     try:
         result = json.loads(text)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, TypeError):
         return None
     findings = result.get("findings") if isinstance(result, dict) else None
     if not isinstance(findings, list):
@@ -89,9 +87,9 @@ def main():
         print("Bruk: python3 ai_review.py <diff-fil>", file=sys.stderr)
         return 1
 
-    token = os.environ.get("GITHUB_TOKEN")
+    token = os.environ.get("AI_API_KEY")
     if not token:
-        print("Feil: GITHUB_TOKEN mangler.", file=sys.stderr)
+        print("Feil: AI_API_KEY mangler.", file=sys.stderr)
         return 1
 
     diff = read_diff(sys.argv[1])
@@ -102,7 +100,9 @@ def main():
     try:
         answer = ask_model(diff, token)
     except urllib.error.HTTPError as e:
-        print("API-feil: HTTP %d %s" % (e.code, e.reason), file=sys.stderr)
+        detail = e.read().decode("utf-8", errors="replace")[:500]
+        print("API-feil: HTTP %d %s\n%s" % (e.code, e.reason, detail),
+              file=sys.stderr)
         return 1
     except urllib.error.URLError as e:
         print("Nettverksfeil: %s" % e.reason, file=sys.stderr)
@@ -114,7 +114,7 @@ def main():
     findings = parse_findings(answer)
     if findings is None:
         print("Modellen svarte ikke med gyldig JSON:", file=sys.stderr)
-        print(answer[:500], file=sys.stderr)
+        print(str(answer)[:500], file=sys.stderr)
         return 1
 
     with open("findings.json", "w", encoding="utf-8") as f:
