@@ -22,6 +22,12 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: git diff "origin/$BASE_REF"...HEAD -- . ':!.github' ':!scripts' > diff.txt
 
+      - name: Installer Semgrep
+        run: pipx install semgrep==1.177.0
+
+      - name: Semgrep-skanning
+        run: semgrep scan --config p/python --metrics=off --text --json-output=semgrep.json testcases/
+
       - name: AI-sikkerhetsgjennomgang
         if: github.actor != 'dependabot[bot]'
         env:
