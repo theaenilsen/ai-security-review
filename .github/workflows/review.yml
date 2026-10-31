@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   review:
@@ -28,3 +29,12 @@ jobs:
           AI_API_URL: https://api.groq.com/openai/v1/chat/completions
           AI_MODEL: openai/gpt-oss-120b
         run: python3 scripts/ai_review.py diff.txt
+
+      - name: Kommenter på PR-en
+        if: github.actor != 'dependabot[bot]'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python3 scripts/post_comment.py findings.json
+        
