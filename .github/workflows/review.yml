@@ -26,8 +26,7 @@ jobs:
         run: pipx install semgrep==1.177.0
 
       - name: Semgrep-skanning
-        run: semgrep scan --config p/python --metrics=off --text --json-output=semgrep.json testcases/
-
+        run: semgrep scan --config p/python --config p/security-audit --metrics=off --text --json-output=semgrep.json testcases/
       - name: AI-sikkerhetsgjennomgang
         if: github.actor != 'dependabot[bot]'
         env:
