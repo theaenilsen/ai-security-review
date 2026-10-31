@@ -47,12 +47,25 @@ def ask_model(diff, token):
         headers={
             "Authorization": "Bearer " + token,
             "Content-Type": "application/json",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "ai-security-review",
         },
         method="POST",
     )
     with urllib.request.urlopen(request, timeout=60) as response:
-        data = json.load(response)
-    return data["choices"][0]["message"]["content"]
+        status = response.status
+        final_url = response.geturl()
+        raw = response.read().decode("utf-8", errors="replace")
+
+    try:
+        data = json.loads(raw)
+        return data["choices"][0]["message"]["content"]
+    except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+        raise RuntimeError(
+            "Uventet svar fra API-et (HTTP %d, URL %s): %r"
+            % (status, final_url, raw[:500])
+        )
 
 
 def parse_findings(text):
@@ -93,6 +106,9 @@ def main():
         return 1
     except urllib.error.URLError as e:
         print("Nettverksfeil: %s" % e.reason, file=sys.stderr)
+        return 1
+    except RuntimeError as e:
+        print(str(e), file=sys.stderr)
         return 1
 
     findings = parse_findings(answer)
