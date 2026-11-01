@@ -20,13 +20,14 @@ jobs:
       - name: Lagre diffen
         env:
           BASE_REF: ${{ github.base_ref }}
-        run: git diff "origin/$BASE_REF"...HEAD -- . ':!.github' ':!scripts' > diff.txt
+        run: git diff "origin/$BASE_REF"...HEAD -- . ':!.github' ':!scripts' ':!eval' > diff.txt
 
       - name: Installer Semgrep
         run: pipx install semgrep==1.177.0
 
       - name: Semgrep-skanning
         run: semgrep scan --config p/python --config p/security-audit --metrics=off --text --json-output=semgrep.json testcases/
+
       - name: AI-sikkerhetsgjennomgang
         if: github.actor != 'dependabot[bot]'
         env:
@@ -42,4 +43,7 @@ jobs:
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: python3 scripts/post_comment.py findings.json
-        
+
+      - name: Sammenlign mot fasit
+        if: github.actor != 'dependabot[bot]'
+        run: python3 eval/compare.py eval/ground_truth.json findings.json semgrep.json
