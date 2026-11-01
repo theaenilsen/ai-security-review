@@ -1,0 +1,17 @@
+{
+  "testcases/case01.py": {"vulnerable": true,  "cwe": ["CWE-89"],  "type": "SQL injection (konkatenering, ingen kjent kilde)"},
+  "testcases/case02.py": {"vulnerable": true,  "cwe": ["CWE-89"],  "type": "SQL injection (f-string fra Flask-request)"},
+  "testcases/case03.py": {"vulnerable": true,  "cwe": ["CWE-78", "CWE-77"],  "type": "Command injection (os.system)"},
+  "testcases/case04.py": {"vulnerable": true,  "cwe": ["CWE-22", "CWE-23", "CWE-73"], "type": "Path traversal"},
+  "testcases/case05.py": {"vulnerable": true,  "cwe": ["CWE-798", "CWE-259"], "type": "Hardkodet passord"},
+  "testcases/case06.py": {"vulnerable": true,  "cwe": ["CWE-327", "CWE-328", "CWE-916", "CWE-759"], "type": "Svak hashing av passord (MD5)"},
+  "testcases/case07.py": {"vulnerable": true,  "cwe": ["CWE-502"], "type": "Usikker deserialisering (pickle)"},
+  "testcases/case08.py": {"vulnerable": true,  "cwe": ["CWE-502", "CWE-20"], "type": "Usikker YAML-lasting"},
+  "testcases/case09.py": {"vulnerable": true,  "cwe": ["CWE-95", "CWE-94"], "type": "Code injection (eval)"},
+  "testcases/case10.py": {"vulnerable": true,  "cwe": ["CWE-918"], "type": "SSRF"},
+  "testcases/case11.py": {"vulnerable": false, "cwe": [], "type": "Trygg: parameterisert SQL"},
+  "testcases/case12.py": {"vulnerable": false, "cwe": [], "type": "Trygg: subprocess med liste, uten shell"},
+  "testcases/case13.py": {"vulnerable": false, "cwe": [], "type": "Trygg: SHA-256 som filsjekksum"},
+  "testcases/case14.py": {"vulnerable": false, "cwe": [], "type": "Trygg: yaml.safe_load"},
+  "testcases/case15.py": {"vulnerable": false, "cwe": [], "type": "Trygg: MD5 som cache-nøkkel (usedforsecurity=False)"}
+}
