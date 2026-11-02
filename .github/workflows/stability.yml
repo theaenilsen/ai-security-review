@@ -6,8 +6,13 @@ on:
       runs:
         description: "Antall kjøringer"
         type: choice
-        options: ["3", "5", "10"]
-        default: "5"
+        options: ["3", "5"]
+        default: "3"
+      mode:
+        description: "per-file = én fil per kall, whole = alt i ett kall"
+        type: choice
+        options: ["per-file", "whole"]
+        default: "per-file"
 
 permissions:
   contents: read
@@ -15,6 +20,7 @@ permissions:
 jobs:
   stability:
     runs-on: ubuntu-24.04
+    timeout-minutes: 90
     steps:
       - name: Hent koden
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -30,18 +36,16 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           AI_API_URL: https://api.groq.com/openai/v1/chat/completions
           AI_MODEL: openai/gpt-oss-120b
+          AI_MODE: ${{ inputs.mode }}
           RUNS: ${{ inputs.runs }}
         run: |
           mkdir -p runs
           for i in $(seq 1 "$RUNS"); do
-            echo "Kjøring $i av $RUNS"
-            if ! python3 scripts/ai_review.py diff.txt > "runs/log_$i.txt"; then
-              echo "Feilet (trolig rate limit). Venter 60 sekunder og prøver igjen."
-              sleep 60
-              python3 scripts/ai_review.py diff.txt > "runs/log_$i.txt"
-            fi
+            echo "=== Kjøring $i av $RUNS ($AI_MODE) ==="
+            python3 scripts/ai_review.py diff.txt > "runs/log_$i.txt"
             mv findings.json "runs/findings_$i.json"
-            if [ "$i" -lt "$RUNS" ]; then sleep 65; fi
+            mv diagnostics.json "runs/diag_$i.json"
+            if [ "$i" -lt "$RUNS" ]; then sleep 30; fi
           done
 
       - name: Analyser stabiliteten
