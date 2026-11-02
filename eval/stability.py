@@ -39,6 +39,29 @@ def main():
             s["precision"] * 100, s["recall"] * 100, s["f1"]))
     lines.append("")
 
+    diag_rows = []
+    for i, path in enumerate(sys.argv[2:], 1):
+        diag_path = os.path.join(os.path.dirname(path),
+                                 os.path.basename(path).replace("findings_", "diag_"))
+        diag = load_json(diag_path, None) if os.path.exists(diag_path) else None
+        if isinstance(diag, dict):
+            reasons = {}
+            for call in diag.get("calls", []):
+                key = str(call.get("finish_reason"))
+                reasons[key] = reasons.get(key, 0) + 1
+            diag_rows.append("| %d | %s | %d | %s | %d | %d | %d |" % (
+                i, diag.get("mode", "?"), diag.get("total_calls", 0),
+                ", ".join("%s: %d" % kv for kv in sorted(reasons.items())) or "-",
+                diag.get("total_prompt_tokens", 0), diag.get("total_completion_tokens", 0),
+                diag.get("total_retries", 0)))
+    if diag_rows:
+        lines.append("### Diagnose per kjøring")
+        lines.append("")
+        lines.append("| Kjøring | Modus | API-kall | finish_reason | Tokens inn | Tokens ut | Nye forsøk |")
+        lines.append("|---|---|---|---|---|---|---|")
+        lines.extend(diag_rows)
+        lines.append("")
+
     lines.append("| Mål | Snitt | Lavest | Høyest |")
     lines.append("|---|---|---|---|")
     for key, label, pct in (("precision", "Presisjon", True), ("recall", "Recall", True),
